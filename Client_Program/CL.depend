@@ -1,0 +1,6 @@
+# depslib dependency file v1.0
+1500146486 source:c:\users\dell\desktop\codes\cl\main.cpp
+	<stdio.h>
+	<iostream>
+	"winsock2.h"
+
