@@ -1,0 +1,197 @@
+About Servers and Clients
+Server
+1.	Initialize WSA.
+2.	Create a socket.
+3.	Bind the socket.
+4.	Listen on the socket.
+5.	Accept a connection.
+6.	Send and receive data.
+7.	Disconnect.
+
+Client
+1.	Initialize WSA.
+2.	Create a socket.
+3.	Connect to the server.
+4.	Send and receive data.
+5.	Disconnect.
+
+
+1.Initialise Winsock BOTH
+#include<winsock2.h> Header File
+ws2_32.lib Library
+Ensure that the build environment links to the Winsock Library file WS2_32.lib
+
+
+The WSAStartup function is used to start or initialise winsock library. 
+2 parameters,The first one is the version we want to load 
+Second one is a WSADATA structure which will hold additional information after winsock has been loaded.
+If any error occurs then the WSAStartup function would return a non zero value and WSAGetLastError can be used to get more information about what error happened.
+
+int WSAStartup(MAKEWORD(2,2),&wsa) != 0) Error
+WSAGetLastError()
+
+
+2. Create A Socket BOTH
+SOCKET m_socket
+The socket() function is used to create a socket.
+
+if((s = socket(AF_INET , SOCK_STREAM , 0 )) == INVALID_SOCKET)
+printf("Could not create socket")
+If the socket call fails, it returns INVALID_SOCKET
+
+Address Family : AF_INET (this is IP version 4)
+Type : SOCK_STREAM (this means connection oriented TCP protocol)
+Protocol : 0 [ or IPPROTO_TCP , IPPROTO_UDP ]
+
+Apart from SOCK_STREAM type of sockets there is another type called SOCK_DGRAM which indicates the UDP protocol. This type of socket is non-connection socket.
+
+WSACleanup is used to terminate the use of the WS2_32 DLL.
+
+
+3.Binding a Socket SERVER
+For a server to accept client connections, it must be bound to a network address within the system.
+Client applications use the IP address and port to connect to the host network.
+The sockaddr structure holds information regarding the address family, IP address, and port number.
+sockaddr_in is a subset of sockaddr and is used for IP version 4 applications.
+
+Create a sockaddr_in object and set its values. sockaddr_in service;
+service.sin_family = AF_INET;
+service.sin_addr.s_addr = inet_addr( "127.0.0.1" ); //(192.168.137.1)
+service.sin_port = htons( 27015 );
+
+if ( bind( m_socket, (SOCKADDR*) &service, sizeof(service) ) == SOCKET_ERROR ) { printf( "bind() failed.\n" );
+The three lines following the declaration of sockaddr_in service are used to set up the sockaddr structure:
+AF_INET is the Internet address family.
+"127.0.0.1" is the local IP address to which the socket will be bound.
+27015 is the port number to which the socket will be bound.
+
+
+4.Listening on a Socket SERVER
+After the socket is bound to an IP address and port on the system, the server must then listen on that IP address and port for incoming connection requests.
+Call the listen function, passing the created socket and the maximum number of allowed connections to accept as parameters. Check for general errors.
+
+if ( listen( m_socket, 1 ) == SOCKET_ERROR )
+
+5.Accepting a Connection SERVER
+Once the socket is listening for a connection, the program must handle connection requests on that socket.
+
+Create a temporary SOCKET object called AcceptSocket for accepting connections
+Create a continuous loop that checks for connections requests. If a connection request occurs, call the accept function to handle the request.
+
+AcceptSocket = SOCKET_ERROR;
+while ( AcceptSocket == SOCKET_ERROR ) 
+{ AcceptSocket = accept( m_socket, NULL, NULL );}
+When the client connection has been accepted, transfer control from the temporary socket to the original socket and stop checking for new connections
+printf( "Client Connected.\n");
+m_socket = AcceptSocket;
+
+
+7.Connecting to a Socket CLIENT
+
+For a client to communicate on a network, it must connect to a server.
+To connect to a socket
+Create a sockaddr_in object clientService and set its values. 
+sockaddr_in clientService;
+clientService.sin_family = AF_INET;
+clientService.sin_addr.s_addr = inet_addr( "127.0.0.1" ); 
+clientService.sin_port = htons( 27015 );
+
+Call the connect function, passing the created socket and the sockaddr_in structure as parameters.
+if ( connect( m_socket, (SOCKADDR*) &clientService, sizeof(clientService) ) == SOCKET_ERROR 
+printf( "Failed to connect.\n" );
+
+AF_INET is the Internet address family.
+"127.0.0.1" is the remote IP address of the server that the client will connect to.
+27015 is the port number associated with the server that the client will connect 
+
+
+
+SEND AND RECIVE DATA.
+
+The following code demonstrates the send and recv functions.
+Server
+int bytesSent;
+int bytesRecv = SOCKET_ERROR;
+char sendbuf[32] = "Server: Sending Data.";
+char recvbuf[32] = "";
+
+bytesRecv = recv( m_socket, recvbuf, 32, 0 );
+cout<<recvbuf;
+printf( "Bytes Recv: %ld\n", bytesRecv );
+
+cin>>sendbuf;
+bytesSent = send( m_socket, sendbuf, strlen(sendbuf), 0 );
+printf( "Bytes Sent: %ld\n", bytesSent );
+
+Client
+
+int bytesSent;
+int bytesRecv = SOCKET_ERROR;
+char sendbuf[32] = "Client: Sending data.";
+char recvbuf[32] = "";
+
+cin>>sendbuf;
+bytesSent = send( m_socket, sendbuf, strlen(sendbuf), 0 ); 
+printf( "Bytes Sent: %ld\n", bytesSent );
+
+bytesRecv = recv( m_socket, recvbuf, 32, 0 );
+//if ( bytesRecv == 0 || bytesRecv == WSAECONNRESET ) 
+{ printf( "Connection Closed.\n");
+break;
+}
+cout<<recvbuf;
+printf( "Bytes Recv: %ld\n", bytesRecv );
+
+
+In this code, two integers are used to keep track of the number of bytes that are sent and received. The send and recv functions both return an integer value of the number of bytes sent or received, respectively, or an error.
+Each function also takes the same parameters: the active socket, a char buffer, the number of bytes to send or receive, and any flags to use.
+
+std::fill(&sendbuf[0], &sendbuf[100], 0); this clear the previous values of the program
+cin>>sendbuf;
+
+DEFINITIONS:
+A socket is one of the most fundamental technologies of computer network programming. Sockets allow network software applications to communicate using standard mechanisms built into network hardware and operating systems.
+Sockets allow communication between two different processes on the same or different machines.
+It's a way to talk to other computers using standard Unix file descriptors. n Unix and related computer operating systems, a file descriptor (FD, less frequently fildes) is an abstract indicator (handle) used to access a file or other input/output resource, such as a pipe or network socket.
+A file descriptor is just an integer associated with an open file and it can be a network connection, a text file, a terminal, or something else.
+today's most popular network software applications rely on sockets.
+
+A socket represents a single connection between exactly two pieces of software
+Socket-based software usually runs on two separate computers on the network, but sockets can also be used to communicate locally (interprocess) on a single computer. Sockets are bidirectional, meaning that either side of the connection is capable of both sending and receiving data.
+
+Several libraries that implement standard application programming interfaces (APIs) exist on the Internet. The first mainstream package - the Berkeley Socket Library is still widely in use on UNIX systems. Another very common API is the Windows Sockets (WinSock) library for Microsoft operating systems.
+WinSock has been in use since 1993 and Berkeley sockets since 1982.
+
+Socket programming is a way of connecting two nodes on a network to communicate with each other. One socket(node) listens on a particular port at an IP, while other socket reaches out to the other to form a connection. Server forms the listener socket while client reaches out to the server.
+
+TYPES:
+Stream sockets, the most common type, requires that the two communicating parties first establish a socket connection, after which any data passed through that connection will be guaranteed to arrive in the same order in which it was sent - so-called connection-oriented programming model.
+Datagram sockets offer "connection-less" semantics. With datagrams, connections are implicit rather than explicit as with streams. Either party simply sends datagrams as needed and waits for the other to respond; messages can be lost in transmission or received out of order, but it is the application's responsibility and not the sockets to deal with these problems. 
+
+Modern network sockets are typically used in conjunction with the Internet protocols -- IP, TCP, and UDP. Libraries implementing sockets for Internet Protocol use TCP for streams, UDP for datagrams, and IP itself for raw sockets.
+To communicate over the Internet, IP socket libraries use the IP address to identify specific computers.IP stands for Internet Protocol and refers to the Internet Layer of the overall network architecture of the Internet.
+An IP address is a 32-bit quantity interpreted as four 8-bit numbers or octets. Each IP address uniquely identifies the participating user network, the host on the network, and the class of the user network.
+
+Addresses beginning with 01111111, or 127 decimal, are reserved for loopback and for internal testing on a local machine [You can test this: you should always be able to ping 127.0.0.1, which points to yourself];
+
+127.0.0.1       localhost
+153.110.31.18   netserve
+66.249.89.104   www.google.com
+
+
+The client-server model
+The client-server model is one of the most used communication paradigms in networked systems. Clients normally communicates with one server at a time. 
+Most of the Net Applications use the Client-Server architecture, which refers to two processes or two applications that communicate with each other to exchange some information. One of the two processes acts as a client process, and another process acts as a server.
+
+Client This is the process, which typically makes a request for information. After getting the response, this process may terminate or may do some other processing.
+
+Server This is the process which takes a request from the clients. After getting a request from the client, this process will perform the required processing, gather the requested information, and send it to the requestor client. Once done, it becomes ready to serve another client. Server processes are always alert and ready to serve incoming requests.
+
+2-tier and 3-tier architectures
+There are two types of client-server architectures -
+2-tier architecture - In this architecture, the client directly interacts with the server. This type of architecture may have some security holes and performance problems.
+3-tier architectures - In this architecture, one more software sits in between the client and the server. This middle software is called ‘middleware’. Middleware are used to perform all the security checks and load balancing in case of heavy load.
+
+
+
+
